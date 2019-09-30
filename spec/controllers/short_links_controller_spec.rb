@@ -103,4 +103,36 @@ RSpec.describe ShortLinksController, type: :controller do
       end
     end
   end
+  
+  describe "Analytics" do
+    let(:long_link) { 'https://www.google.com' }
+    let(:params) { { long_link: long_link, user_id: 1 } }
+
+    context 'create with valid params' do
+      cached_response = nil
+      before(:each) do
+        long_link = 'https://www.google.com'
+        params = {long_link: long_link, user_id: 1 }
+        cached_response = post(:create, params: params)
+      end
+
+      it 'returns a 201' do
+        expect(cached_response).to have_http_status(:created)
+      end
+
+      it 'should have a use_count of 1' do
+        expect(ShortLink.find_quietly(:last).use_count).to eq(1)
+      end
+
+      it 'create duplicate should increase use_count to 2' do
+        expect(ShortLink.find_quietly(:last).use_count).to eq(2)
+      end
+
+      it 'create non duplicate long_link should have use_count eq 1' do
+        long_link = 'https://www.facebook.com'
+        post(:create, params: {long_link: 'https://www.google.com', user_id: 2})
+        expect(ShortLink.find_quietly(:last).use_count).to eq(1)
+      end
+    end
+  end
 end

@@ -15,6 +15,16 @@ class ShortLinksController < ApplicationController
     redirect_to @short_link.long_link, status: :moved_permanently
   end
 
+  def analytics
+    @short_link = ShortLink.find_quietly(params[:id])
+    status = @short_link != 0 ? :ok : :not_found
+    if status == :ok
+      render json: {long_link: @short_link.long_link, short_link: "http://test.host/#{@short_link.encoded_id}", usage_count: "#{@short_link.use_count}"}, status: status
+    else
+      render json: {usage_count: 0}, status: status
+    end
+  end
+
   private
 
   def set_short_link
