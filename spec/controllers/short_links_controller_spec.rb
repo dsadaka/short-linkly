@@ -105,16 +105,26 @@ RSpec.describe ShortLinksController, type: :controller do
   end
   
   describe "Analytics" do
-    let(:long_link) { 'https://www.google.com' }
-    let(:params) { { long_link: long_link, user_id: 1 } }
+
+    params = { long_link: 'https://www.google.com', user_id: 1 }
+    no_dup_params =  { long_link: 'https://www.google.com', user_id: 2 }
+    cached_response = nil
+
+    let(:create_request) { post :create, params: params }
+    let(:create_no_dup_request) { post :create, params: no_dup_params }
+
+    before(:each) do
+      cached_response = post(:create, params: params)
+    end
 
     context 'create with valid params' do
-      cached_response = nil
-      before(:each) do
-        long_link = 'https://www.google.com'
-        params = {long_link: long_link, user_id: 1 }
-        cached_response = post(:create, params: params)
-      end
+
+      # cached_response = nil
+      # before(:each) do
+      #   long_link = 'https://www.google.com'
+      #   params = {long_link: long_link, user_id: 1 }
+      #   cached_response = post(:create, params: params)
+      # end
 
       it 'returns a 201' do
         expect(cached_response).to have_http_status(:created)
@@ -125,14 +135,24 @@ RSpec.describe ShortLinksController, type: :controller do
       end
 
       it 'create duplicate should increase use_count to 2' do
+        create_request
         expect(ShortLink.find_quietly(:last).use_count).to eq(2)
       end
 
-      it 'create non duplicate long_link should have use_count eq 1' do
-        long_link = 'https://www.facebook.com'
-        post(:create, params: {long_link: 'https://www.google.com', user_id: 2})
+      it 'non duplicate params should have use_count eq 1' do
+        create_request
+        create_no_dup_request
         expect(ShortLink.find_quietly(:last).use_count).to eq(1)
       end
+
+      it 'use count via request should also eq 1' do
+        create_no_dup_request
+        short_link = ShortLink.find_quietly(:last)
+        get(:analytics, params: {id: short_link.encoded_id})
+        expect(JSON.parse(response.body))
+            .to eq('long_link' => short_link.long_link, 'short_link' => "http://test.host/#{short_link.encoded_id}", 'use_count' => "1")
+      end
     end
+
   end
 end
