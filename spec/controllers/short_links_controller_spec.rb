@@ -119,13 +119,6 @@ RSpec.describe ShortLinksController, type: :controller do
 
     context 'create with valid params' do
 
-      # cached_response = nil
-      # before(:each) do
-      #   long_link = 'https://www.google.com'
-      #   params = {long_link: long_link, user_id: 1 }
-      #   cached_response = post(:create, params: params)
-      # end
-
       it 'returns a 201' do
         expect(cached_response).to have_http_status(:created)
       end

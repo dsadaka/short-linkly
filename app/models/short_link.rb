@@ -28,6 +28,8 @@ class ShortLink < ApplicationRecord
     self.find(self.decoded_id(eid.to_s))
   end
 
+  # Use when you want to find a record without incrementing it's use_count
+  # Passed:  :last, :first or encoded id.
   def self.find_quietly(eid)
     skip_callback(:find, :after, :increment_use_count)
     short_link =  case eid
